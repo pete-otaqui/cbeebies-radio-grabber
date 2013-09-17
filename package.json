@@ -1,0 +1,28 @@
+{
+  "name": "cbeebies-radio-grabber",
+  "description": "Gets CBeebies Radio Podcast Files",
+  "readme": "Gets CBeebies Radio Podcast Files",
+  "version": "0.1.0",
+  "dependencies": {
+    "blindparser": "~0.1.0",
+    "sqlite3": "~2.1.17",
+    "request": "~2.27.0",
+    "filed": "~0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pete-otaqui/cbeebies-radio-grabber.git"
+  },
+  "engines": {
+    "node": ">= 0.6.13 < 0.11.0"
+  },
+  "scripts": {
+    "install": "node install.js"
+  },
+  "main": "cbeebies-radio-grabber.js",
+  "licenses": [
+    {
+      "type": "BSD"
+    }
+  ]
+}
