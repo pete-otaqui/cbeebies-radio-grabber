@@ -16,7 +16,7 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
     console.log('got feed, parsing');
     out.items.forEach(function(item, index) {
         console.log('checking', index, item.link);
-        if ( index > 10 ) return;
+        if ( index > 0 ) return;
         var link = item.link[0];
         var filename = url.parse(link).pathname.split("/").pop();
         db.get('SELECT * FROM downloads WHERE url = ?', link, function(err, row) {
