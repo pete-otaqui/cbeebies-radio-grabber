@@ -33,7 +33,7 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
                 request(link)
                     .pipe(file)
                     .on('data', function(data) {
-                        // console.log('binary data received', index);
+                        console.log('binary data received', index);
                     })
                     .on('error', function(err) {
                         console.log('REQUEST ERROR', link, err);
