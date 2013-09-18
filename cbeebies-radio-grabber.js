@@ -6,16 +6,21 @@ var filed = require('filed');
 
 var db = new sqlite3.Database('database.db');
 
+console.log('running');
+
 parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
     if ( err ) {
         console.log(err);
         return;
     }
+    console.log('got feed, parsing');
     out.items.forEach(function(item, index) {
+        console.log('checking', index, item.link);
         if ( index > 10 ) return;
         var link = item.link[0];
         var filename = url.parse(link).pathname.split("/").pop();
         db.get('SELECT * FROM downloads WHERE url = ?', link, function(err, row) {
+            console.log('selecting', index, 'got', row);
             var file;
             if ( row === undefined ) {
                 file = filed('downloads/' + filename)
@@ -33,6 +38,7 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
                     .on('error', function(err) {
                         console.log('REQUEST ERROR', link, err);
                     });
+                console.log('attempting request & pipe');
             }
         });
     });
