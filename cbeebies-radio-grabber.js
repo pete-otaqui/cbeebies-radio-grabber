@@ -4,9 +4,16 @@ var request = require('request');
 var url = require('url');
 var filed = require('filed');
 var nodemailer = require("nodemailer");
+var probe = require('node-ffprobe');
+var fs = require('fs');
 
 var db = new sqlite3.Database('database.db');
 
+
+function logg(str) {
+    var d = Date.now();
+    fs.appendFile('debug.log', d + ': ' + str + '\n');
+}
 
 
 parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
@@ -23,6 +30,14 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
             if ( row === undefined ) {
                 file = filed('downloads/' + filename)
                     .on('end', function() {
+                        probe('downloads/' + filename, function(err, data) {
+                            if ( !err && data.metadata.title ) {
+                                var number = fs.readdirSync('./downloads/').length;
+                                var title = data.metadata.title.replace(/cbeebies( radio)?: /i, '');
+                                var new_filename = 'cbeebies ' + number + ' ' + title + '.mp3';
+                                fs.renameSync('downloads/' + filename, 'downloads/' + new_filename);
+                            }
+                        });
                         db.run('INSERT INTO downloads VALUES (?)', link);
                         sendMail('New CBeebies Radio show ... ' + file);
                     })
@@ -51,12 +66,6 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
        pass: "F9WPPDB-tCYL12d-dxhYDQ"
    }
 });
-var sendmailTransport = nodemailer.createTransport('sendmail', {
-    path: '/usr/sbin/sendmail',
-    args: [
-        '-t', '-f', 'pete@otaqui.com'
-    ]
-});
 
 function sendMail(text) {
     smtpTransport.sendMail(
@@ -64,7 +73,8 @@ function sendMail(text) {
             from: "CBeebies Radio Grabber <pete@otaqui.com>", // sender address
             to: "Pete Otaqui <pete@otaqui.com>", // comma separated list of receivers
             subject: "CBeebies Radio Grabber", // Subject line
-            text: text // plaintext body
+            text: text, // plaintext body
+            html: text
         },
         function(error, response){
             if(error){
