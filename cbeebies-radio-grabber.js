@@ -39,7 +39,7 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
                             }
                         });
                         db.run('INSERT INTO downloads VALUES (?)', link);
-                        sendMail('New CBeebies Radio show ... ' + file);
+                        sendMail('New CBeebies Radio show ... ' + filename);
                     })
                     .on('error', function(err) {
                         console.log('FILE ERROR', filename, err);
@@ -59,13 +59,8 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
 
 
 
-var smtpTransport = nodemailer.createTransport("SMTP",{
-   service: "Mandrill",
-   auth: {
-       user: "pete@otaqui.com",
-       pass: "F9WPPDB-tCYL12d-dxhYDQ"
-   }
-});
+var smtpTransport = nodemailer.createTransport("SMTP", require('config.json'));
+
 
 function sendMail(text) {
     smtpTransport.sendMail(
@@ -73,8 +68,7 @@ function sendMail(text) {
             from: "CBeebies Radio Grabber <pete@otaqui.com>", // sender address
             to: "Pete Otaqui <pete@otaqui.com>", // comma separated list of receivers
             subject: "CBeebies Radio Grabber", // Subject line
-            text: text, // plaintext body
-            html: text
+            text: text // plaintext body
         },
         function(error, response){
             if(error){

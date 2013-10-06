@@ -8,7 +8,7 @@
     "sqlite3": "~2.1.17",
     "request": "~2.27.0",
     "filed": "~0.1.0",
-    "node-mailer": "*",
+    "nodemailer": "*",
     "node-ffprobe": "1.2.2"
   },
   "repository": {
