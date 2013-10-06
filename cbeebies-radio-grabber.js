@@ -4,9 +4,16 @@ var request = require('request');
 var url = require('url');
 var filed = require('filed');
 var nodemailer = require("nodemailer");
+var probe = require('node-ffprobe');
+var fs = require('fs');
 
 var db = new sqlite3.Database('database.db');
 
+
+function logg(str) {
+    var d = Date.now();
+    fs.appendFile('debug.log', d + ': ' + str + '\n');
+}
 
 
 parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
@@ -23,6 +30,14 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
             if ( row === undefined ) {
                 file = filed('downloads/' + filename)
                     .on('end', function() {
+                        probe('downloads/' + filename, function(err, data) {
+                            if ( !err && data.metadata.title ) {
+                                var number = fs.readdirSync('./downloads/').length;
+                                var title = data.metadata.title.replace(/cbeebies( radio)?: /i, '');
+                                var new_filename = 'cbeebies ' + number + ' ' + title + '.mp3';
+                                fs.renameSync('downloads/' + filename, 'downloads/' + new_filename);
+                            }
+                        });
                         db.run('INSERT INTO downloads VALUES (?)', link);
                         sendMail('New CBeebies Radio show ... ' + filename);
                     })
@@ -57,9 +72,9 @@ function sendMail(text) {
         },
         function(error, response){
             if(error){
-                console.log(error);
+                logg(error);
             } else {
-                console.log("Message sent: " + response.message);
+                logg("Message sent: " + response.message);
             }
             smtpTransport.close();
         }
