@@ -44,7 +44,7 @@ parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function
 
 
 
-var smtpTransport = nodemailer.createTransport("SMTP", require('config.json'));
+var smtpTransport = nodemailer.createTransport("SMTP", require('./config.json'));
 
 
 function sendMail(text) {
