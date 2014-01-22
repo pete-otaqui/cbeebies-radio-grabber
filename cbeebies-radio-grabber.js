@@ -16,14 +16,13 @@ function logg(str) {
 }
 
 logg('Running at ' + Date.now());
-return;
 
 parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
     if ( err ) {
         console.log(err);
         return;
     }
-    // console.log('found ' + out.items.length + ' items');
+    console.log('found ' + out.items.length + ' items');
     downloadPodcasts(out.items);
 });
 
@@ -53,7 +52,7 @@ function downloadPodcast(object) {
     }
     var file;
     var link = object.link[0];
-    // console.log('checking link');
+    console.log('checking link');
     var filename = url.parse(link).pathname.split("/").pop();
     db.get('SELECT * FROM downloads WHERE url = ?', link, function(err, row) {
         var file;
