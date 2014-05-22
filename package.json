@@ -9,7 +9,7 @@
     "request": "~2.27.0",
     "filed": "~0.1.0",
     "nodemailer": "*",
-    "node-ffprobe": "1.2.2"
+    "avprober": "*"
   },
   "repository": {
     "type": "git",

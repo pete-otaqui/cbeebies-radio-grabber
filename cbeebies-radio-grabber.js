@@ -4,11 +4,11 @@ var request = require('request');
 var url = require('url');
 var filed = require('filed');
 var nodemailer = require("nodemailer");
-var probe = require('node-ffprobe');
 var fs = require('fs');
+var avprober = require('avprober');
 
 var db = new sqlite3.Database('database.db');
-
+var count = 0;
 
 function logg(str) {
     var d = Date.now();
@@ -17,13 +17,18 @@ function logg(str) {
 
 logg('Running at ' + Date.now());
 
-parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
-    if ( err ) {
-        console.log(err);
-        return;
-    }
-    console.log('found ' + out.items.length + ' items');
-    downloadPodcasts(out.items);
+
+var count = 0;
+db.get('SELECT COUNT(*) AS num FROM downloads', function(err, count_row) {
+  count = count_row.num;
+  parser.parseURL('http://downloads.bbc.co.uk/podcasts/radio/cr/rss.xml', function(err, out) {
+      if ( err ) {
+          console.log(err);
+          return;
+      }
+      logg('found ' + out.items.length + ' items');
+      downloadPodcasts(out.items);
+  });
 });
 
 function downloadPodcasts(list) {
@@ -52,7 +57,7 @@ function downloadPodcast(object) {
     }
     var file;
     var link = object.link[0];
-    console.log('checking link');
+    logg('checking link ' + link);
     var filename = url.parse(link).pathname.split("/").pop();
     db.get('SELECT * FROM downloads WHERE url = ?', link, function(err, row) {
         var file;
@@ -62,35 +67,39 @@ function downloadPodcast(object) {
             });
             return;
         }
-        // console.log('... downloading');
-        file = filed('downloads/' + filename)
-            .on('end', function() {
-                probe('downloads/' + filename, function(err, data) {
-                    if ( !err && data.metadata.title ) {
-                        var number = fs.readdirSync('./downloads/').length;
-                        var title = data.metadata.title.replace(/cbeebies( radio)?: /i, '');
-                        title = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
-                        var new_filename = 'cbeebies-' + number + '-' + title + '.mp3';
-                        fs.renameSync('downloads/' + filename, 'downloads/' + new_filename);
-                        db.run('INSERT INTO downloads VALUES (?)', link);
-                        sendMail('New CBeebies Radio show ... ' + new_filename);
-                        pdones.forEach(function(fn) {
-                            fn();
-                        });
-                    }
-                });
-            })
-            .on('error', function(err) {
-                console.log('FILE ERROR', filename, err);
-            });
-        request(link)
-            .pipe(file)
-            .on('data', function(data) {
-                // console.log('binary data received', index);
-            })
-            .on('error', function(err) {
-                console.log('REQUEST ERROR', link, err);
-            });
+//        db.get('SELECT COUNT(*) AS num FROM downloads', function(err, count_row) {
+          // console.log('... downloading');
+          file = filed('downloads/' + filename)
+              .on('end', function() {
+                  avprober('downloads/' + filename).then(function(data) {
+                      var metadata = data.metadata;
+                      if ( metadata.title ) {
+                          var number = ++count;
+                          var title = metadata.title.replace(/cbeebies( radio)?: /i, '');
+                          title = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
+                          var new_filename = 'cbeebies-' + number + '-' + title + '.mp3';
+                          logg('new_filename ' + new_filename);
+                          fs.renameSync('downloads/' + filename, 'downloads/' + new_filename);
+                          db.run('INSERT INTO downloads VALUES (?)', link);
+                          sendMail('New CBeebies Radio show ... ' + new_filename);
+                          pdones.forEach(function(fn) {
+                             fn();
+                          });
+                      }
+                  });
+              })
+              .on('error', function(err) {
+                  //console.log('FILE ERROR', filename, err);
+              });
+          request(link)
+              .pipe(file)
+              .on('data', function(data) {
+                  // console.log('binary data received', index);
+              })
+              .on('error', function(err) {
+                  console.log('REQUEST ERROR', link, err);
+              });
+//        });
     });
 
     return promise;
